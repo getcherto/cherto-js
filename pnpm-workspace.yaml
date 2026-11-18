@@ -1,0 +1,13 @@
+packages:
+  - "packages/*"
+  - "sdks/*"
+
+# Explicit, so resolution fails rather than falling back to a younger version.
+minimumReleaseAge: 1440
+trustPolicy: no-downgrade
+
+allowBuilds:
+  esbuild: true
+
+overrides:
+  esbuild: ">=0.25.0"

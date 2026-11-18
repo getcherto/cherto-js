@@ -1,0 +1,62 @@
+name: Bug report
+description: Something in an SDK doesn't work as its README describes.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues here are public. Never paste a server key (`sk_…`), a client key, your organization's config, or unit ids and attributes that identify your users.
+
+        To report a security vulnerability, follow the security policy.
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      options:
+        - "@cherto/node"
+        - "@cherto/browser"
+        - "@cherto/react"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "0.4.1"
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime
+      description: For `@cherto/node`, the Node.js version and where it runs. For `@cherto/browser` and `@cherto/react`, the browser and its version, the bundler or framework, the React version, and whether it ran during server-side rendering.
+      placeholder: Node.js 22.12 on AWS Lambda, or Safari 18 with Vite 7
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Include the error's `code` and any SDK log lines, with keys removed.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce it
+      description: A minimal example helps most. An `offline` client reproduces most problems without a key; the package's README shows how.
+    validations:
+      required: true
+  - type: checkboxes
+    id: redacted
+    attributes:
+      label: Before you submit
+      options:
+        - label: I've removed every key, and anything that identifies my users.
+          required: true

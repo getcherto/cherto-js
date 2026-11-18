@@ -1,0 +1,110 @@
+name: Promote
+
+# Runs only in the private staging repo. A merged release PR lands on main as
+# one commit carrying a `Release: <package>@<version>` trailer per released
+# package and `Snapshot: sha256:<hash>`, the hash of the export that was
+# verified before the PR opened. This checks each release against the tree and
+# that the tree still hashes to the snapshot, then fast-forwards the public
+# repo's main to the commit and pushes a `<package>@<version>` tag per release,
+# each of which starts the public repo's release workflow. GitHub starts no
+# workflow for a push of more than three tags, so a commit releases at most
+# three packages.
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: promote
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  promote:
+    if: github.repository == 'getcherto/cherto-js-staging'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: public-sdk
+    permissions:
+      contents: read
+    steps:
+      # Full history: the public repo receives main's commits, not a snapshot.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check the commit is the verified export
+        id: release
+        run: |
+          mapfile -t releases < <(git log -1 --format='%(trailers:key=Release,valueonly)' | sed '/^$/d')
+          if [ "${#releases[@]}" -lt 1 ] || [ "${#releases[@]}" -gt 3 ]; then
+            echo "::error::HEAD has ${#releases[@]} Release: trailers; a release commit has one to three"
+            exit 1
+          fi
+          declare -A seen
+          names=()
+          tags=()
+          for release in "${releases[@]}"; do
+            if ! [[ "$release" =~ ^@cherto/([a-z0-9-]+)@([0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?)$ ]]; then
+              echo "::error::cannot read the trailer Release: $release"
+              exit 1
+            fi
+            name="@cherto/${BASH_REMATCH[1]}"
+            dir="sdks/${BASH_REMATCH[1]}"
+            version="${BASH_REMATCH[2]}"
+            if [ -n "${seen[$name]:-}" ]; then
+              echo "::error::HEAD releases $name twice"
+              exit 1
+            fi
+            seen[$name]=1
+            actual=$(node -p "const p = require('./$dir/package.json'); p.name + '@' + p.version" 2> /dev/null || true)
+            if [ "$actual" != "$release" ]; then
+              echo "::error::HEAD releases $release, but $dir/package.json is ${actual:-missing}"
+              exit 1
+            fi
+            names+=("$name $version")
+            tags+=("$release")
+          done
+          joined=$(printf '%s, ' "${names[@]}")
+          subject=$(git log -1 --format=%s)
+          if [ "$subject" != "chore(release): ${joined%, }" ]; then
+            echo "::error::HEAD is not the release commit for ${joined%, }: $subject"
+            exit 1
+          fi
+          expected=$(git log -1 --format='%(trailers:key=Snapshot,valueonly)' | sed '/^$/d')
+          actual=$(node scripts/snapshot-hash.mjs)
+          if [ "$expected" != "sha256:$actual" ]; then
+            echo "::error::the tree hashes to sha256:$actual, not the recorded ${expected:-<none>}"
+            exit 1
+          fi
+          echo "tags=${tags[*]}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: token
+        with:
+          client-id: ${{ vars.PUBLISH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PUBLISH_APP_PRIVATE_KEY }}
+          owner: getcherto
+          repositories: cherto-js
+          permission-contents: write
+          permission-workflows: write
+
+      # A plain push only fast-forwards, and --atomic moves main and creates
+      # every tag together or not at all.
+      - name: Fast-forward the public repo and tag the releases
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          TAGS: ${{ steps.release.outputs.tags }}
+        run: |
+          read -ra tags <<< "$TAGS"
+          refspecs=("HEAD:refs/heads/main")
+          for tag in "${tags[@]}"; do
+            refspecs+=("HEAD:refs/tags/$tag")
+          done
+          git -c credential.helper= -c 'credential.helper=!gh auth git-credential' \
+            push --atomic https://github.com/getcherto/cherto-js.git "${refspecs[@]}"

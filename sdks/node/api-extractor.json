@@ -1,0 +1,31 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+  "mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+  "compiler": {
+    "overrideTsconfig": {
+      "compilerOptions": {
+        "target": "es2022",
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "lib": ["es2023"],
+        "types": [],
+        "strict": true,
+        "skipLibCheck": true
+      }
+    }
+  },
+  "apiReport": {
+    "enabled": true,
+    "reportFolder": "<projectFolder>/node_modules/.cache/api-extractor/",
+    "reportTempFolder": "<projectFolder>/node_modules/.cache/api-extractor/temp/"
+  },
+  "docModel": { "enabled": false },
+  "dtsRollup": { "enabled": false },
+  "tsdocMetadata": { "enabled": false },
+  "newlineKind": "lf",
+  "messages": {
+    "extractorMessageReporting": {
+      "ae-missing-release-tag": { "logLevel": "none" }
+    }
+  }
+}

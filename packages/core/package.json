@@ -1,0 +1,27 @@
+{
+  "name": "@cherto/core",
+  "version": "0.0.2",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cherto/config": "workspace:*",
+    "eslint": "^10.14.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  }
+}

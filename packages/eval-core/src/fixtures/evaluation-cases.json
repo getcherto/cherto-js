@@ -1,0 +1,2481 @@
+{
+  "description": "Shared experiment evaluation cases. Each case is a config (experiments and holdouts), the units and attributes of one read, and what a reader serves for each experiment. `expect` holds under both policies; `expectFailClosed` replaces entries for a reader that fails closed. `expectHoldouts` lists every holdout resolved for the units, with the experiments the read is an exposure for, sorted; absent means none resolve.",
+  "cases": [
+    {
+      "name": "allocates on the salt and unit id: treatment",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "allocates on the salt and unit id: control",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-3" },
+      "expect": { "exp-a": { "variant": "control", "reason": "assigned" } }
+    },
+    {
+      "name": "walks variants sorted by key, whatever order they're listed in",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "gamma", "allocationPercentage": 20 },
+            { "key": "alpha", "allocationPercentage": 30 },
+            { "key": "beta", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-4" },
+      "expect": { "exp-a": { "variant": "alpha", "reason": "assigned" } }
+    },
+    {
+      "name": "walks a three-way split to its middle variant",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "gamma", "allocationPercentage": 20 },
+            { "key": "alpha", "allocationPercentage": 30 },
+            { "key": "beta", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-2" },
+      "expect": { "exp-a": { "variant": "beta", "reason": "assigned" } }
+    },
+    {
+      "name": "walks a three-way split to its last variant",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "gamma", "allocationPercentage": 20 },
+            { "key": "alpha", "allocationPercentage": 30 },
+            { "key": "beta", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "gamma", "reason": "assigned" } }
+    },
+    {
+      "name": "places a bucket on a two-decimal allocation boundary in the next variant",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 40.85 },
+            { "key": "treatment", "allocationPercentage": 59.15 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-3" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "places a bucket just under a two-decimal allocation boundary in the earlier variant",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 40.86 },
+            { "key": "treatment", "allocationPercentage": 59.14 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-3" },
+      "expect": { "exp-a": { "variant": "control", "reason": "assigned" } }
+    },
+    {
+      "name": "admits a unit inside the traffic gate",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 50,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-2" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "excludes a unit outside the traffic gate",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 50,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_in_traffic" } }
+    },
+    {
+      "name": "excludes a unit whose gate bucket is just above a two-decimal cutoff",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 33.06,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-9" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_in_traffic" } }
+    },
+    {
+      "name": "admits a unit whose gate bucket is just under a two-decimal cutoff",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 33.07,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-9" },
+      "expect": { "exp-a": { "variant": "control", "reason": "assigned" } }
+    },
+    {
+      "name": "excludes everyone at zero traffic",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 0,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-3" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_in_traffic" } }
+    },
+    {
+      "name": "reports a missing unit instead of falling back to another unit type",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "company": "unit-3" },
+      "expect": { "exp-a": { "variant": null, "reason": "unit_missing" } }
+    },
+    {
+      "name": "hashes the experiment's own unit type when several are sent",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "company",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1", "company": "unit-3" },
+      "expect": { "exp-a": { "variant": "control", "reason": "assigned" } }
+    },
+    {
+      "name": "treats an omitted unit type named constructor as missing",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "constructor",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "unit_missing" } }
+    },
+    {
+      "name": "treats an omitted unit type named __proto__ as missing",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "__proto__",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "unit_missing" } }
+    },
+    {
+      "name": "hashes a unit type named constructor when the caller sends it",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "constructor",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "constructor": "unit-3" },
+      "expect": { "exp-a": { "variant": "control", "reason": "assigned" } }
+    },
+    {
+      "name": "evaluates each experiment on its own salt",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        },
+        {
+          "key": "exp-b",
+          "status": "running",
+          "salt": "salt-beta",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-4" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "assigned" },
+        "exp-b": { "variant": "treatment", "reason": "assigned" }
+      }
+    },
+    {
+      "name": "serves a concluded winner without the unit, the gate or a salt",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "",
+          "trafficPercentage": 0,
+          "unitTypeKey": "company",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "concludedVariant": "treatment"
+        }
+      ],
+      "units": { "device": "device-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "concluded" } }
+    },
+    {
+      "name": "serves a concluded winner that no variant lists",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "concludedVariant": "retired"
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "retired", "reason": "concluded" } }
+    },
+    {
+      "name": "serves a concluded winner whatever its allocations",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [{ "key": "control", "allocationPercentage": 10 }],
+          "concludedVariant": "control"
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "control", "reason": "concluded" } }
+    },
+    {
+      "name": "rejects a concluded experiment that names no winner",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "rejects a concluded experiment whose winner is empty",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "concludedVariant": ""
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "serves nothing for a draft",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "draft",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_running" } }
+    },
+    {
+      "name": "serves nothing for a paused experiment",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "paused",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_running" } }
+    },
+    {
+      "name": "an unknown status is served as running, or skipped when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "scheduled",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "unsupported" }
+      }
+    },
+    {
+      "name": "serves a unit the targeting matches",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "plan", "operator": "equals", "values": ["premium"] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "plan": "premium" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "omits a unit the targeting doesn't match",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "plan", "operator": "equals", "values": ["premium"] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "plan": "free" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_eligible" } }
+    },
+    {
+      "name": "omits a unit with no attributes from non-empty targeting",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "plan", "operator": "equals", "values": ["premium"] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_eligible" } }
+    },
+    {
+      "name": "matches strictly by type",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "tier", "operator": "equals", "values": [1] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "tier": "1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_eligible" } }
+    },
+    {
+      "name": "serves everyone for targeting with no rules",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": { "version": 1, "rules": [] }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "ORs rule groups and ANDs their clauses",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [
+                  { "attribute": "plan", "operator": "equals", "values": ["premium"] },
+                  { "attribute": "region", "operator": "in", "values": ["north"] }
+                ]
+              },
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "seats", "operator": "gte", "values": [10] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "plan": "premium", "region": "south", "seats": 12 },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "compares semver values by precedence",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [
+                  {
+                    "attribute": "appVersion",
+                    "operator": "gte",
+                    "values": ["2.0.0"],
+                    "valueKind": "semver"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "appVersion": "2.10.0" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "ranks a prerelease below its release",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [
+                  {
+                    "attribute": "appVersion",
+                    "operator": "gte",
+                    "values": ["2.0.0"],
+                    "valueKind": "semver"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "appVersion": "2.0.0-rc.1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_eligible" } }
+    },
+    {
+      "name": "gates a concluded experiment by its targeting",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "concludedVariant": "treatment",
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "plan", "operator": "equals", "values": ["premium"] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_eligible" } }
+    },
+    {
+      "name": "an unsupported targeting version fails open, or is skipped when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 2,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "plan", "operator": "equals", "values": ["premium"] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "unsupported" }
+      }
+    },
+    {
+      "name": "an unknown operator fails its clause, or is skipped when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "plan", "operator": "matches", "values": ["premium"] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "plan": "premium" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_eligible" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "unsupported" }
+      }
+    },
+    {
+      "name": "a saved segment is evaluated by its clauses, or skipped when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": "segment-1",
+                "clauses": [{ "attribute": "plan", "operator": "equals", "values": ["premium"] }]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "plan": "premium" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "unsupported" }
+      }
+    },
+    {
+      "name": "an unknown valueKind compares plain values, or is skipped when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [
+                  {
+                    "attribute": "plan",
+                    "operator": "equals",
+                    "values": ["premium"],
+                    "valueKind": "date"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "plan": "premium" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "unsupported" }
+      }
+    },
+    {
+      "name": "forces a unit-id match past the gate and targeting",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 0,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "plan", "operator": "equals", "values": ["premium"] }]
+              }
+            ]
+          },
+          "variantOverrides": [
+            {
+              "id": "ovr-unit-1",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-1" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "override", "trackEnrollment": false }
+      }
+    },
+    {
+      "name": "matches a unit-id override on any unit type sent, without the experiment's",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-device-1",
+              "match": { "type": "unit_id", "unitTypeKey": "device", "unitId": "device-1" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "device": "device-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "override", "trackEnrollment": false }
+      }
+    },
+    {
+      "name": "forces a targeting-group match",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-group",
+              "match": {
+                "type": "targeting_group",
+                "targetingGroupId": "ovr-group-group",
+                "targeting": {
+                  "version": 1,
+                  "rules": [
+                    {
+                      "segmentId": null,
+                      "clauses": [{ "attribute": "staff", "operator": "equals", "values": [true] }]
+                    }
+                  ]
+                }
+              },
+              "variantKey": "control",
+              "position": 1
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "staff": true },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "override", "trackEnrollment": false }
+      }
+    },
+    {
+      "name": "falls through a targeting-group override the unit doesn't match",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-group",
+              "match": {
+                "type": "targeting_group",
+                "targetingGroupId": "ovr-group-group",
+                "targeting": {
+                  "version": 1,
+                  "rules": [
+                    {
+                      "segmentId": null,
+                      "clauses": [{ "attribute": "staff", "operator": "equals", "values": [true] }]
+                    }
+                  ]
+                }
+              },
+              "variantKey": "control",
+              "position": 1
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "staff": false },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "takes the first matching override in the order sent",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-late",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-3" },
+              "variantKey": "treatment",
+              "position": 9
+            },
+            {
+              "id": "ovr-early",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-3" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-3" },
+      "expect": {
+        "exp-a": { "variant": "treatment", "reason": "override", "trackEnrollment": false }
+      }
+    },
+    {
+      "name": "falls through an override naming a variant that isn't listed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-unit-3",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-3" },
+              "variantKey": "retired",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-3" },
+      "expect": { "exp-a": { "variant": "control", "reason": "assigned" } }
+    },
+    {
+      "name": "ignores a malformed override",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-1" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "ignores a targeting-group override with no conditions",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-group",
+              "match": {
+                "type": "targeting_group",
+                "targetingGroupId": "ovr-group-group",
+                "targeting": { "version": 1, "rules": [] }
+              },
+              "variantKey": "control",
+              "position": 1
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "an override of an unknown match type is ignored, or skipped when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-new",
+              "match": { "type": "cohort", "cohortId": "cohort-1" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "unsupported" }
+      }
+    },
+    {
+      "name": "a group override with an unsupported envelope is ignored, or skipped when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-group",
+              "match": {
+                "type": "targeting_group",
+                "targetingGroupId": "ovr-group-group",
+                "targeting": {
+                  "version": 2,
+                  "rules": [
+                    {
+                      "segmentId": null,
+                      "clauses": [
+                        { "attribute": "plan", "operator": "equals", "values": ["premium"] }
+                      ]
+                    }
+                  ]
+                }
+              },
+              "variantKey": "control",
+              "position": 1
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "plan": "premium" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "unsupported" }
+      }
+    },
+    {
+      "name": "a group override with an unknown operator matches nobody, or is skipped when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-group",
+              "match": {
+                "type": "targeting_group",
+                "targetingGroupId": "ovr-group-group",
+                "targeting": {
+                  "version": 1,
+                  "rules": [
+                    {
+                      "segmentId": null,
+                      "clauses": [
+                        { "attribute": "plan", "operator": "matches", "values": ["premium"] }
+                      ]
+                    }
+                  ]
+                }
+              },
+              "variantKey": "control",
+              "position": 1
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "attributes": { "plan": "premium" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "unsupported" }
+      }
+    },
+    {
+      "name": "ignores overrides once concluded",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "concludedVariant": "treatment",
+          "variantOverrides": [
+            {
+              "id": "ovr-unit-1",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-1" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "concluded" } }
+    },
+    {
+      "name": "doesn't force a unit into a draft",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "draft",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-unit-1",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-1" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_running" } }
+    },
+    {
+      "name": "a running experiment with no salt is skipped",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "a missing unit is reported before a missing salt, unless failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "company": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "unit_missing" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "an override is still served without a salt, unless failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-unit-1",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-1" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "override", "trackEnrollment": false }
+      },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "a running experiment with no variants is skipped",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": []
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "the gate is applied before an empty variant list, unless failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 50,
+          "unitTypeKey": "user",
+          "variants": []
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_in_traffic" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "skips an experiment whose allocations don't sum to 100, and serves the rest",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 40 }
+          ]
+        },
+        {
+          "key": "exp-b",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" },
+        "exp-b": { "variant": "treatment", "reason": "assigned" }
+      }
+    },
+    {
+      "name": "skips an experiment with a variant that has no allocation",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [{ "key": "control", "allocationPercentage": 100 }, { "key": "treatment" }]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "skips an experiment with an allocation above 100, even when they sum to 100",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 150 },
+            { "key": "treatment", "allocationPercentage": -50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "skips an experiment with a negative allocation, even when they sum to 100",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": -25 },
+            { "key": "treatment", "allocationPercentage": 25 },
+            { "key": "variant-c", "allocationPercentage": 100 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "skips an experiment with two variants of the same key, and serves the rest",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "control", "allocationPercentage": 50 }
+          ]
+        },
+        {
+          "key": "exp-b",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-3" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" },
+        "exp-b": { "variant": "control", "reason": "assigned" }
+      }
+    },
+    {
+      "name": "allocates around a zero-percent variant",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 0 },
+            { "key": "treatment", "allocationPercentage": 100 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-3" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "the gate is applied before allocations are checked, unless failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 50,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 40 }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_in_traffic" } },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "an override is still served with unusable allocations, unless failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 40 }
+          ],
+          "variantOverrides": [
+            {
+              "id": "ovr-unit-1",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-1" },
+              "variantKey": "control",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "override", "trackEnrollment": false }
+      },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "serves a held-out unit the control",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "holdout", "trackEnrollment": false }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": ["exp-a"] } }
+    },
+    {
+      "name": "allocates a released unit normally",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-2" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectHoldouts": { "hold-a": { "arm": "released", "exposures": ["exp-a"] } }
+    },
+    {
+      "name": "holds out a unit the traffic gate would exclude",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 50,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "holdout", "trackEnrollment": false }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": ["exp-a"] } }
+    },
+    {
+      "name": "counts a released unit the gate excludes as exposed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 50,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-5" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_in_traffic" } },
+      "expectHoldouts": { "hold-a": { "arm": "released", "exposures": ["exp-a"] } }
+    },
+    {
+      "name": "neither holds out nor exposes a unit the targeting excludes",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control",
+          "targeting": {
+            "version": 1,
+            "rules": [
+              {
+                "segmentId": null,
+                "clauses": [{ "attribute": "plan", "operator": "equals", "values": ["premium"] }]
+              }
+            ]
+          }
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_eligible" } },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    },
+    {
+      "name": "neither holds out nor exposes a forced unit",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control",
+          "variantOverrides": [
+            {
+              "id": "ovr-unit-1",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-1" },
+              "variantKey": "treatment",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "treatment", "reason": "override", "trackEnrollment": false }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    },
+    {
+      "name": "holds out a unit whose override names a variant that isn't listed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control",
+          "variantOverrides": [
+            {
+              "id": "ovr-unit-1",
+              "match": { "type": "unit_id", "unitTypeKey": "user", "unitId": "unit-1" },
+              "variantKey": "retired",
+              "position": 0
+            }
+          ]
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "holdout", "trackEnrollment": false }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": ["exp-a"] } }
+    },
+    {
+      "name": "neither holds out nor exposes a running experiment's missing unit",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "company",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "unit_missing" } },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    },
+    {
+      "name": "holds a unit out of a concluded experiment, whatever its units",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "company",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control",
+          "concludedVariant": "treatment"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "holdout", "trackEnrollment": false }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": ["exp-a"] } }
+    },
+    {
+      "name": "serves a released unit a concluded winner",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control",
+          "concludedVariant": "treatment"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-2" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "concluded" } },
+      "expectHoldouts": { "hold-a": { "arm": "released", "exposures": ["exp-a"] } }
+    },
+    {
+      "name": "doesn't expose a concluded experiment that names no winner",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "concluded",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-2" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "released", "exposures": [] } }
+    },
+    {
+      "name": "skips a held-out unit's experiment that has no control",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ]
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    },
+    {
+      "name": "skips a held-out unit's experiment whose control isn't listed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "retired"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    },
+    {
+      "name": "treats an empty control as no control",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": ""
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    },
+    {
+      "name": "allocates a released unit normally when there is no control",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": null
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-2" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } },
+      "expectHoldouts": { "hold-a": { "arm": "released", "exposures": ["exp-a"] } }
+    },
+    {
+      "name": "holds a unit out when any covering holdout does",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        },
+        {
+          "key": "hold-b",
+          "salt": "salt-hold-2",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-9" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "holdout", "trackEnrollment": false }
+      },
+      "expectHoldouts": {
+        "hold-a": { "arm": "holdout", "exposures": ["exp-a"] },
+        "hold-b": { "arm": "released", "exposures": ["exp-a"] }
+      }
+    },
+    {
+      "name": "still exposes a unit to the holdout that released it when another can't hold it out",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": null
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        },
+        {
+          "key": "hold-b",
+          "salt": "salt-hold-2",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-9" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      },
+      "expectHoldouts": {
+        "hold-a": { "arm": "holdout", "exposures": [] },
+        "hold-b": { "arm": "released", "exposures": ["exp-a"] }
+      }
+    },
+    {
+      "name": "leaves an experiment the holdout doesn't cover alone",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        },
+        {
+          "key": "exp-b",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-b"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "treatment", "reason": "assigned" },
+        "exp-b": { "variant": "control", "reason": "holdout", "trackEnrollment": false }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": ["exp-b"] } }
+    },
+    {
+      "name": "ignores a holdout on an omitted unit type named constructor",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "constructor",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "ignores a holdout on an omitted unit type named __proto__",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "__proto__",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "neither holds out nor exposes an experiment on an omitted unit type named constructor",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "constructor",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "unit_missing" } },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    },
+    {
+      "name": "ignores a holdout whose unit is absent",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "company",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": "treatment", "reason": "assigned" } }
+    },
+    {
+      "name": "a holdout with no salt is ignored, or skips what it covers when failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        },
+        {
+          "key": "exp-b",
+          "status": "running",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "treatment", "reason": "assigned" },
+        "exp-b": { "variant": "treatment", "reason": "assigned" }
+      },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      }
+    },
+    {
+      "name": "a salt-less experiment still holds out, unless failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": {
+        "exp-a": { "variant": "control", "reason": "holdout", "trackEnrollment": false }
+      },
+      "expectFailClosed": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": ["exp-a"] } },
+      "expectHoldoutsFailClosed": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    },
+    {
+      "name": "a salt-less experiment still exposes a released unit, unless failing closed",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "running",
+          "salt": "",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-2" },
+      "expect": {
+        "exp-a": { "variant": null, "reason": "error", "errorCode": "invalid_experiment" }
+      },
+      "expectHoldouts": { "hold-a": { "arm": "released", "exposures": ["exp-a"] } },
+      "expectHoldoutsFailClosed": { "hold-a": { "arm": "released", "exposures": [] } }
+    },
+    {
+      "name": "neither holds out nor exposes a unit for a draft",
+      "experiments": [
+        {
+          "key": "exp-a",
+          "status": "draft",
+          "salt": "salt-alpha",
+          "trafficPercentage": 100,
+          "unitTypeKey": "user",
+          "variants": [
+            { "key": "control", "allocationPercentage": 50 },
+            { "key": "treatment", "allocationPercentage": 50 }
+          ],
+          "controlVariantKey": "control"
+        }
+      ],
+      "holdouts": [
+        {
+          "key": "hold-a",
+          "salt": "salt-hold",
+          "unitTypeKey": "user",
+          "percentage": 50,
+          "experimentKeys": ["exp-a"]
+        }
+      ],
+      "units": { "user": "unit-1" },
+      "expect": { "exp-a": { "variant": null, "reason": "not_running" } },
+      "expectHoldouts": { "hold-a": { "arm": "holdout", "exposures": [] } }
+    }
+  ]
+}

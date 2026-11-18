@@ -1,0 +1,81 @@
+{
+  "name": "@cherto/browser",
+  "version": "0.4.1",
+  "description": "Official Cherto browser SDK for A/B test assignments and enrollment.",
+  "keywords": [
+    "cherto",
+    "experimentation",
+    "ab-testing",
+    "feature-flags",
+    "sdk",
+    "browser"
+  ],
+  "homepage": "https://github.com/getcherto/cherto-js/tree/main/sdks/browser#readme",
+  "bugs": {
+    "url": "https://github.com/getcherto/cherto-js/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getcherto/cherto-js.git",
+    "directory": "sdks/browser"
+  },
+  "license": "MIT",
+  "author": "Cherto",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "development": "./src/index.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "import": {
+          "types": "./dist/index.d.ts",
+          "default": "./dist/index.js"
+        },
+        "require": {
+          "types": "./dist/index.d.cts",
+          "default": "./dist/index.cjs"
+        }
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cherto/config": "workspace:*",
+    "@cherto/core": "workspace:*",
+    "@microsoft/api-extractor": "^7.60.1",
+    "eslint": "^10.14.0",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  }
+}

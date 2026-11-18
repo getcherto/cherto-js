@@ -1,0 +1,33 @@
+{
+  "name": "@cherto/eval-core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./conformance": {
+      "types": "./src/conformance.ts",
+      "default": "./dist/conformance.js"
+    },
+    "./semver": "./src/semver.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cherto/config": "workspace:*",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  }
+}

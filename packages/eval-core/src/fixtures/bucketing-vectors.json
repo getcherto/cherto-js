@@ -1,0 +1,263 @@
+[
+  {
+    "description": "basic allocation: 50/50 split",
+    "salt": "002a000000000000",
+    "unitId": "user-1",
+    "domain": "variant",
+    "input": "002a000000000000:user-1:variant",
+    "sha256": "29fcec5fb82eb8aded174f839d210bdc5b39693ed2987051c3b09a5bf4871451",
+    "h64": "3025552945542248621",
+    "bucket": 48621,
+    "sortedVariantsWithCutoffs": [
+      {
+        "key": "control",
+        "allocationPercentage": 50,
+        "cutoff": 50000
+      },
+      {
+        "key": "treatment",
+        "allocationPercentage": 50,
+        "cutoff": 100000
+      }
+    ],
+    "chosenVariant": "control"
+  },
+  {
+    "description": "gate domain: same salt, different domain → independent bucket",
+    "salt": "002a000000000000",
+    "unitId": "user-1",
+    "domain": "include",
+    "input": "002a000000000000:user-1:include",
+    "sha256": "9d38a505d29a34940fd72c9f14e024bf2de31433f05129ed6256c791348e2bd2",
+    "h64": "11328986307077223572",
+    "bucket": 23572,
+    "sortedVariantsWithCutoffs": null,
+    "chosenVariant": null,
+    "note": "bucket(include) !== bucket(variant) for the same salt+unitId; the domain suffix is what gives statistical independence"
+  },
+  {
+    "description": "non-ASCII unitId (accented characters)",
+    "salt": "002a000000000000",
+    "unitId": "ñoño-1",
+    "domain": "variant",
+    "input": "002a000000000000:ñoño-1:variant",
+    "sha256": "c905d07ee5f798430d82832fb6157d7216feee1dd88271d26a27abf873428907",
+    "h64": "14485213019949733955",
+    "bucket": 33955,
+    "sortedVariantsWithCutoffs": [
+      {
+        "key": "control",
+        "allocationPercentage": 50,
+        "cutoff": 50000
+      },
+      {
+        "key": "treatment",
+        "allocationPercentage": 50,
+        "cutoff": 100000
+      }
+    ],
+    "chosenVariant": "control",
+    "note": "UTF-8 encoding is required. ñ is U+00F1 (2 UTF-8 bytes: 0xC3 0xB1). A port using UTF-16 or latin-1 will produce a different hash."
+  },
+  {
+    "description": "emoji in unitId (multi-byte UTF-8)",
+    "salt": "002a000000000000",
+    "unitId": "🎉-user",
+    "domain": "variant",
+    "input": "002a000000000000:🎉-user:variant",
+    "sha256": "2115968df18e2fba7fb634ec500ff4297264a9176db16e122bced7d067c02d24",
+    "h64": "2383977114149728186",
+    "bucket": 28186,
+    "sortedVariantsWithCutoffs": [
+      {
+        "key": "control",
+        "allocationPercentage": 50,
+        "cutoff": 50000
+      },
+      {
+        "key": "treatment",
+        "allocationPercentage": 50,
+        "cutoff": 100000
+      }
+    ],
+    "chosenVariant": "control",
+    "note": "🎉 is U+1F389 (4 UTF-8 bytes: 0xF0 0x9F 0x8E 0x89). Validates multi-byte code-point handling."
+  },
+  {
+    "description": "empty unitId",
+    "salt": "002a000000000000",
+    "unitId": "",
+    "domain": "variant",
+    "input": "002a000000000000::variant",
+    "sha256": "8cba7a037c7b92b2739b840c3b5d409d13d7d5810618325bf38a356680d9015f",
+    "h64": "10140551666370056882",
+    "bucket": 56882,
+    "sortedVariantsWithCutoffs": [
+      {
+        "key": "control",
+        "allocationPercentage": 50,
+        "cutoff": 50000
+      },
+      {
+        "key": "treatment",
+        "allocationPercentage": 50,
+        "cutoff": 100000
+      }
+    ],
+    "chosenVariant": "treatment"
+  },
+  {
+    "description": "colon-containing unitId: no collision with field delimiters",
+    "salt": "002a000000000000",
+    "unitId": "company:42",
+    "domain": "variant",
+    "input": "002a000000000000:company:42:variant",
+    "sha256": "509fe079b4b61aef6e6439476969e7162a504d9da4805fe6a49ff65684d409e7",
+    "h64": "5809608857658727151",
+    "bucket": 27151,
+    "sortedVariantsWithCutoffs": [
+      {
+        "key": "control",
+        "allocationPercentage": 50,
+        "cutoff": 50000
+      },
+      {
+        "key": "treatment",
+        "allocationPercentage": 50,
+        "cutoff": 100000
+      }
+    ],
+    "chosenVariant": "control",
+    "note": "A unitId containing ':' is unambiguous because the salt is colon-free hex and the domain suffix is fixed (trailing field). The hash input is well-defined regardless of colons in the middle."
+  },
+  {
+    "description": "high/max salt value (ffffffffffffffff)",
+    "salt": "ffffffffffffffff",
+    "unitId": "user-1",
+    "domain": "variant",
+    "input": "ffffffffffffffff:user-1:variant",
+    "sha256": "b9bd31196bcdce3a734d866e7c8cb60754f31e68a28df8484b82f6cb462bcf52",
+    "h64": "13383907652867575354",
+    "bucket": 75354,
+    "sortedVariantsWithCutoffs": [
+      {
+        "key": "control",
+        "allocationPercentage": 50,
+        "cutoff": 50000
+      },
+      {
+        "key": "treatment",
+        "allocationPercentage": 50,
+        "cutoff": 100000
+      }
+    ],
+    "chosenVariant": "treatment",
+    "note": "Salt is all hex f's (64-bit max). Verifies the hash input treats the salt as a string literal, not a number."
+  },
+  {
+    "description": "0.03% boundary (variant): proves round() is required, not floor()",
+    "salt": "270f000000000000",
+    "unitId": "u-25740",
+    "domain": "variant",
+    "input": "270f000000000000:u-25740:variant",
+    "sha256": "36d0dd77496c355dfdc6176eef33479047a5275ef9e582b05509f6cfb1f1ffb6",
+    "h64": "3949900377606600029",
+    "bucket": 29,
+    "sortedVariantsWithCutoffs": [
+      {
+        "key": "a",
+        "allocationPercentage": 0.03,
+        "cutoff": 30
+      },
+      {
+        "key": "b",
+        "allocationPercentage": 99.97,
+        "cutoff": 100000
+      }
+    ],
+    "chosenVariant": "a",
+    "note": "cutoff for 0.03% = round(0.03 * 1000) = 30. bucket 29 < 30 → variant 'a'. Wrong formula floor((0.03/100)*100000) = 29 → bucket 29 is NOT < 29 → would return 'b'. This case MUST fail on any implementation using floor instead of round."
+  },
+  {
+    "description": "0.03% boundary (gate/include): proves round() in isInTrafficGate",
+    "salt": "270f000000000000",
+    "unitId": "u-32313",
+    "domain": "include",
+    "input": "270f000000000000:u-32313:include",
+    "sha256": "7e91a24f94c1a5ddd53539d987503e6936cd8b0b01b5bc4f649b5e8ac6b0b3a6",
+    "h64": "9120249183083800029",
+    "bucket": 29,
+    "sortedVariantsWithCutoffs": null,
+    "chosenVariant": null,
+    "note": "Gate bucket=29. round(0.03*1000)=30 → 29 < 30 → admitted. floor((0.03/100)*100000)=29 → 29 < 29 → false → NOT admitted. A gate using floor would wrongly exclude this unit at 0.03% traffic."
+  },
+  {
+    "description": "top boundary: 99.99% allocation → cutoff 99990",
+    "salt": "0000000000003039",
+    "unitId": "top-test",
+    "domain": "variant",
+    "input": "0000000000003039:top-test:variant",
+    "sha256": "f672e872e7ac6fd6c58b617fe23269fdcfdf8bdd79b3c9be556d7e7075875151",
+    "h64": "17758511860886040534",
+    "bucket": 40534,
+    "sortedVariantsWithCutoffs": [
+      {
+        "key": "a",
+        "allocationPercentage": 99.99,
+        "cutoff": 99990
+      },
+      {
+        "key": "b",
+        "allocationPercentage": 0.01,
+        "cutoff": 100000
+      }
+    ],
+    "chosenVariant": "a",
+    "note": "cutoff for 99.99% = round(99.99 * 1000) = 99990. Confirms top-of-range arithmetic."
+  },
+  {
+    "description": "holdout domain: same salt+unit as the 50/50 vector, independent bucket",
+    "salt": "002a000000000000",
+    "unitId": "user-1",
+    "domain": "holdout",
+    "input": "002a000000000000:user-1:holdout",
+    "sha256": "f33cac903709893cf6ddf8641fce721affb0c307861d240484f410ddeb90e72c",
+    "h64": "17527073585217767740",
+    "bucket": 67740,
+    "sortedVariantsWithCutoffs": null,
+    "chosenVariant": null,
+    "holdoutPercentage": 5,
+    "holdoutArm": "released",
+    "note": "bucket(holdout) differs from both bucket(include)=23572 and bucket(variant)=48621 for the same salt+unitId; the :holdout suffix keeps a holdout independent of any experiment's gate and allocation"
+  },
+  {
+    "description": "holdout domain: 5% holdout, unit in the held-out arm",
+    "salt": "002a000000000000",
+    "unitId": "user-4",
+    "domain": "holdout",
+    "input": "002a000000000000:user-4:holdout",
+    "sha256": "6f273b65b56bf8cfee99bc674ee7b28e648372132899fb39465a17933ae05d4f",
+    "h64": "8009435770323204303",
+    "bucket": 4303,
+    "sortedVariantsWithCutoffs": null,
+    "chosenVariant": null,
+    "holdoutPercentage": 5,
+    "holdoutArm": "holdout",
+    "note": "4303 < round(5 * 1000) = 5000 ⇒ holdout; at 4% (cutoff 4000) the same unit is released"
+  },
+  {
+    "description": "holdout domain: distinct holdout salt, same unit",
+    "salt": "9f1c3b2a7d6e5f40",
+    "unitId": "user-1",
+    "domain": "holdout",
+    "input": "9f1c3b2a7d6e5f40:user-1:holdout",
+    "sha256": "edc5c5eff76acd0259c8dee6423cbcddd43e452af84bb85b7a6b7e1c0fa3fb17",
+    "h64": "17133317991839747330",
+    "bucket": 47330,
+    "sortedVariantsWithCutoffs": null,
+    "chosenVariant": null,
+    "holdoutPercentage": 50,
+    "holdoutArm": "holdout",
+    "note": "a holdout's salt is derived from (orgId, holdoutKey), never an experiment's, so two holdouts hash the same unit independently"
+  }
+]

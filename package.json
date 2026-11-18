@@ -1,0 +1,28 @@
+{
+  "name": "cherto-js",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.4.1",
+  "engines": {
+    "node": ">=24.11"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format:check": "prettier --check .",
+    "api-report": "node scripts/api-report.mjs",
+    "check:package": "node scripts/check-package.mjs"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@cherto/config": "workspace:*",
+    "eslint": "^10.13.0",
+    "prettier": "3.9.10",
+    "publint": "^0.3.25",
+    "turbo": "^2.11.10",
+    "typescript": "^6.0.3",
+    "typescript-5.9": "npm:typescript@5.9.3"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "name": "@cherto/node",
+  "version": "0.4.1",
+  "description": "Official Cherto Node.js server SDK for local experiment evaluation.",
+  "keywords": [
+    "cherto",
+    "experimentation",
+    "ab-testing",
+    "feature-flags",
+    "sdk",
+    "server"
+  ],
+  "homepage": "https://github.com/getcherto/cherto-js/tree/main/sdks/node#readme",
+  "bugs": {
+    "url": "https://github.com/getcherto/cherto-js/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getcherto/cherto-js.git",
+    "directory": "sdks/node"
+  },
+  "license": "MIT",
+  "author": "Cherto",
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@cherto/config": "workspace:*",
+    "@cherto/core": "workspace:*",
+    "@cherto/eval-core": "workspace:*",
+    "@microsoft/api-extractor": "^7.60.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "tsup": "^9.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  }
+}
